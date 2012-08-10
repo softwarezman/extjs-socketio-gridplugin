@@ -34,7 +34,6 @@ Ext.define('Ext.ux.GridSocketIO', {
 		 * Array of Objects designating the store types that should be looked for and added
 		 * Objects in the array should look like: 
 		 * {storeProperty: 'eventStore', storeId: 'Events'}
-		 * If it is empty it will try and use the default grid's store
 		 */
 		storeTypes: [],
 		
@@ -60,6 +59,7 @@ Ext.define('Ext.ux.GridSocketIO', {
 		grid.socket = Ext.create('Ext.ux.SocketIO', {host: me.serverHost, port: me.serverPort}) ;
 		grid.socket.owner = grid;
 		
+		grid.relayEvents(grid.socket, ['socketconnect', 'socketdisconnect']);
 		
 		
 		/**
@@ -96,22 +96,26 @@ Ext.define('Ext.ux.GridSocketIO', {
 	},
 	
 	/** 
-    * Select either Resource or Event store
+    * Select try and find the right store, either by storeId or storeType
+    * @param {String} storeType The storeType (usually storeId)
+    * @param {Ext.grid.Panel} grid The Grid who's store you are trying to find
     */
     getStoreByType: function(storeType, grid){
-		var store, owner;
-		if(storeType === '' || storeType == grid.getStore().storeId) {
+		var storeId = grid.getStore().storeId;
+		
+		if(storeType === '' || storeType == storeId) {
 			return grid.getStore();
-		} else {
-			if(grid.getStore().storeId != storeType.storeId && this.ownerGrid) {
-				//Try and look in the ownerCt for the store!
-				if(this.ownerGrid[storeType.storeProperty]) {
-					return this.ownerGrid[storeType.storeProperty];
-				}
-			} else {
-				return grid.getStore();	
+		} 
+		
+		if(storeId != storeType.storeId && this.ownerGrid) {
+			//Try and look in the ownerCt for the store!
+			if(this.ownerGrid[storeType.storeProperty]) {
+				return this.ownerGrid[storeType.storeProperty];
 			}
+		} else {
+			return grid.getStore();	
 		}
+		
         return null;          
     }
 });
