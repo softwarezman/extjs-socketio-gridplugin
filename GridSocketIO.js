@@ -41,7 +41,24 @@ Ext.define('Ext.ux.GridSocketIO', {
 		 * @cfg (Object) dynamic
 		 * Parent grid if there is an issue with sub-grids being called first
 		 */
-		ownerGrid: null
+		ownerGrid: null,
+		
+		/**
+	     * An empty function by default, but provided so that you can perform custom
+	     * record validations before they are added to the store.
+	     * This function is passed through to the websocket class
+	     * @param {String} Type of event that is calling the function (update, add, remove)
+	     * @param {Ext.data.Model} The model that needs to be validated
+	     * @method validateRecords
+	     */
+	    validateRecords: Ext.emptyFn,
+	    
+	    /**
+	     * What the connection should do if the validation fails.
+	     * Defaults to '' which means it leaves the record alone.
+	     * Other supported option is 'remove' which will remove the record completely from the store
+	     */
+	    validationFailureAction: '',
 	},
 	
 	/**
@@ -56,7 +73,7 @@ Ext.define('Ext.ux.GridSocketIO', {
 			grid = me.ownerGrid;
 		}
 		
-		grid.socket = Ext.create('Ext.ux.SocketIO', {host: me.serverHost, port: me.serverPort}) ;
+		grid.socket = Ext.create('Ext.ux.SocketIO', me) ;
 		grid.socket.owner = grid;
 		
 		grid.relayEvents(grid.socket, ['socketconnect', 'socketdisconnect']);
@@ -70,7 +87,7 @@ Ext.define('Ext.ux.GridSocketIO', {
 			store = me.getStoreByType('', grid);
 			this.addListeners(grid, store, grid.store.storeId);
 		} else {
-			for(i = 0; i < me.storeTypes.length; i++) {
+			for(var i = 0; i < me.storeTypes.length; i++) {
 				store = me.getStoreByType(me.storeTypes[i], grid);
 				this.addListeners(grid, store, me.storeTypes[i]);
 			}
